@@ -1,26 +1,42 @@
 import { FC, ReactElement } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Location } from 'react-router-dom';
+
+import { Preloader } from '@ui';
 
 import { getCookie } from '../../utils/cookie';
+import { useSelector } from '../../services/store';
+import { selectAuthChecked, selectUser } from '../../services/selectors';
 
 type TProtectedRouteProps = {
   guestOnly?: boolean;
   children: ReactElement;
 };
 
-const isAuthenticated = () => !!getCookie('accessToken');
-
 export const ProtectedRoute: FC<TProtectedRouteProps> = ({
   children,
   guestOnly = false
 }) => {
   const location = useLocation();
+  const user = useSelector(selectUser);
+  const authChecked = useSelector(selectAuthChecked);
+  const hasToken = !!getCookie('accessToken');
 
-  if (guestOnly && isAuthenticated()) {
-    return <Navigate to='/' replace />;
+  if (hasToken && !authChecked) {
+    return <Preloader />;
   }
 
-  if (!guestOnly && !isAuthenticated()) {
+  const isAuthenticated = !!user;
+
+  if (guestOnly) {
+    if (isAuthenticated) {
+      const redirectPath =
+        (location.state as { from?: Location })?.from?.pathname || '/';
+      return <Navigate to={redirectPath} replace />;
+    }
+    return children;
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to='/login' replace state={{ from: location }} />;
   }
 

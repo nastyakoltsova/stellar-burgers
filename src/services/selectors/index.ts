@@ -30,6 +30,10 @@ export const selectProfileOrdersError = (state: RootState) =>
 
 export const selectUser = (state: RootState) => state.user.user;
 
+export const selectIsAuthenticated = (state: RootState) => !!state.user.user;
+
+export const selectAuthChecked = (state: RootState) => state.user.authChecked;
+
 export const selectFetchingUser = (state: RootState) => state.user.fetchingUser;
 
 export const selectLoginLoading = (state: RootState) => state.user.loginLoading;

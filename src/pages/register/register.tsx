@@ -1,5 +1,4 @@
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
-import { useNavigate, useLocation, Location } from 'react-router-dom';
 
 import { registerUser, clearUserError } from '../../services/slices/userSlice';
 
@@ -13,8 +12,6 @@ import {
 
 export const Register: FC = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const loading = useSelector(selectRegisterLoading);
   const authError = useSelector(selectAuthError);
@@ -25,16 +22,12 @@ export const Register: FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const redirectPath =
-    (location.state as { from?: Location })?.from?.pathname || '/';
-
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     try {
       await dispatch(
         registerUser({ name: userName, email, password })
       ).unwrap();
-      navigate(redirectPath, { replace: true });
     } catch {}
   };
 

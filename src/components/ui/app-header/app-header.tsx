@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link, useMatch } from 'react-router-dom';
 import clsx from 'clsx';
 
 import styles from './app-header.module.css';
@@ -13,13 +13,7 @@ import {
 } from '@zlden/react-developer-burger-ui-components';
 
 export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => {
-  const { pathname } = useLocation();
-
-  const constructorActive =
-    pathname === '/' || pathname.startsWith('/ingredients/');
-  const feedActive = pathname === '/feed' || pathname.startsWith('/feed/');
-  const profileActive =
-    pathname === '/profile' || pathname.startsWith('/profile/');
+  const ingredientsMatch = useMatch('/ingredients/:id');
 
   return (
     <header className={styles.header}>
@@ -27,8 +21,12 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => {
         <div className={styles.menu_part_left}>
           <NavLink
             to='/'
-            className={() =>
-              clsx(styles.link, constructorActive && styles.link_active)
+            end
+            className={({ isActive }) =>
+              clsx(
+                styles.link,
+                (isActive || ingredientsMatch) && styles.link_active
+              )
             }
           >
             <BurgerIcon type={'primary'} />
@@ -38,8 +36,8 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => {
           </NavLink>
           <NavLink
             to='/feed'
-            className={() =>
-              clsx(styles.link, feedActive && styles.link_active)
+            className={({ isActive }) =>
+              clsx(styles.link, isActive && styles.link_active)
             }
           >
             <ListIcon type={'primary'} />
@@ -53,11 +51,11 @@ export const AppHeaderUI: FC<TAppHeaderUIProps> = ({ userName }) => {
         </div>
         <NavLink
           to='/profile'
-          className={() =>
+          className={({ isActive }) =>
             clsx(
               styles.link,
               styles.link_position_last,
-              profileActive && styles.link_active
+              isActive && styles.link_active
             )
           }
         >

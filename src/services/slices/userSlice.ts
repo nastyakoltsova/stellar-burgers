@@ -124,6 +124,7 @@ export const logoutUser = createAsyncThunk('user/logout', async () => {
 export type UserState = {
   user: TUser | null;
   fetchingUser: boolean;
+  authChecked: boolean;
   loginLoading: boolean;
   registerLoading: boolean;
   updateLoading: boolean;
@@ -133,6 +134,7 @@ export type UserState = {
 const initialState: UserState = {
   user: null,
   fetchingUser: false,
+  authChecked: !getCookie('accessToken'),
   loginLoading: false,
   registerLoading: false,
   updateLoading: false,
@@ -155,10 +157,12 @@ const userSlice = createSlice({
       })
       .addCase(fetchUser.fulfilled, (state, action) => {
         state.fetchingUser = false;
+        state.authChecked = true;
         state.user = action.payload;
       })
       .addCase(fetchUser.rejected, (state, action) => {
         state.fetchingUser = false;
+        state.authChecked = true;
         state.user = null;
         if (action.payload) state.error = action.payload;
         clearAuthStorage();
@@ -170,6 +174,7 @@ const userSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loginLoading = false;
+        state.authChecked = true;
         state.user = action.payload;
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -183,6 +188,7 @@ const userSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.registerLoading = false;
+        state.authChecked = true;
         state.user = action.payload;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -205,6 +211,7 @@ const userSlice = createSlice({
 
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+        state.authChecked = true;
       });
   }
 });

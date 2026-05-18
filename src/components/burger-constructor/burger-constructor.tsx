@@ -5,20 +5,18 @@ import {
   submitOrder,
   clearOrderFeedback
 } from '../../services/slices/burgerConstructorSlice';
-import { fetchProfileOrders } from '../../services/slices/profileOrdersSlice';
 import { useDispatch, useSelector } from '../../services/store';
 import {
   selectConstructorBun,
   selectConstructorIngredients,
   selectConstructorOrderNumber,
   selectConstructorOrderModalTitle,
+  selectIsAuthenticated,
   selectOrderSubmitPending
 } from '../../services/selectors';
-import type { TOrder, TConstructorIngredient } from '@utils-types';
+import type { TConstructorIngredient } from '@utils-types';
 
 import { BurgerConstructorUI } from '@ui';
-
-import { getCookie } from '../../utils/cookie';
 
 export const BurgerConstructor: FC = () => {
   const dispatch = useDispatch();
@@ -28,8 +26,8 @@ export const BurgerConstructor: FC = () => {
   const bun = useSelector(selectConstructorBun);
   const ingredients = useSelector(selectConstructorIngredients);
   const orderSubmitPending = useSelector(selectOrderSubmitPending);
-  const orderModalTitleStored = useSelector(selectConstructorOrderModalTitle);
   const orderNumber = useSelector(selectConstructorOrderNumber);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
   const constructorItems = useMemo(
     () => ({
@@ -49,26 +47,13 @@ export const BurgerConstructor: FC = () => {
     [constructorItems]
   );
 
-  const orderModalData: TOrder | null =
-    orderNumber !== null
-      ? ({
-          number: orderNumber,
-          name: orderModalTitleStored,
-          _id: '',
-          status: 'done',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          ingredients: []
-        } as TOrder)
-      : null;
-
   const closeOrderModal = () => dispatch(clearOrderFeedback());
 
   const onOrderClick = async () => {
     if (!bun || orderSubmitPending) {
       return;
     }
-    if (!getCookie('accessToken')) {
+    if (!isAuthenticated) {
       navigate('/login', { replace: false, state: { from: location } });
       return;
     }
@@ -78,7 +63,6 @@ export const BurgerConstructor: FC = () => {
 
     try {
       await dispatch(submitOrder(ids)).unwrap();
-      dispatch(fetchProfileOrders());
     } catch {}
   };
 
@@ -89,7 +73,7 @@ export const BurgerConstructor: FC = () => {
       price={price}
       orderRequest={showingOrderLoader}
       constructorItems={constructorItems}
-      orderModalData={showingOrderLoader ? null : orderModalData}
+      orderNumber={showingOrderLoader ? null : orderNumber}
       onOrderClick={onOrderClick}
       closeOrderModal={closeOrderModal}
     />
