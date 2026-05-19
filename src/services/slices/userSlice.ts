@@ -78,8 +78,10 @@ export const fetchUser = createAsyncThunk<TUser, void, { rejectValue: string }>(
       if (res.success && res.user) {
         return res.user;
       }
+      clearAuthStorage();
       return rejectWithValue('Не удалось получить пользователя');
     } catch (error) {
+      clearAuthStorage();
       return rejectWithValue(
         ((error as { message?: string })?.message ||
           'Не удалось получить пользователя') as string
@@ -165,7 +167,6 @@ const userSlice = createSlice({
         state.authChecked = true;
         state.user = null;
         if (action.payload) state.error = action.payload;
-        clearAuthStorage();
       })
 
       .addCase(loginUser.pending, (state) => {
