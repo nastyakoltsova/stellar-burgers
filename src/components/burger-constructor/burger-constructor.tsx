@@ -1,24 +1,41 @@
 import { FC, useMemo } from 'react';
-import { TConstructorIngredient } from '@utils-types';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import {
+  submitOrder,
+  clearOrderFeedback
+} from '../../services/slices/burgerConstructorSlice';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  selectConstructorBun,
+  selectConstructorIngredients,
+  selectConstructorOrderNumber,
+  selectConstructorOrderModalTitle,
+  selectIsAuthenticated,
+  selectOrderSubmitPending
+} from '../../services/selectors';
+import type { TConstructorIngredient } from '@utils-types';
+
 import { BurgerConstructorUI } from '@ui';
 
 export const BurgerConstructor: FC = () => {
-  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
-  const constructorItems = {
-    bun: {
-      price: 0
-    },
-    ingredients: []
-  };
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const orderRequest = false;
+  const bun = useSelector(selectConstructorBun);
+  const ingredients = useSelector(selectConstructorIngredients);
+  const orderSubmitPending = useSelector(selectOrderSubmitPending);
+  const orderNumber = useSelector(selectConstructorOrderNumber);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
-  const orderModalData = null;
-
-  const onOrderClick = () => {
-    if (!constructorItems.bun || orderRequest) return;
-  };
-  const closeOrderModal = () => {};
+  const constructorItems = useMemo(
+    () => ({
+      bun,
+      ingredients
+    }),
+    [bun, ingredients]
+  );
 
   const price = useMemo(
     () =>
@@ -30,14 +47,33 @@ export const BurgerConstructor: FC = () => {
     [constructorItems]
   );
 
-  return null;
+  const closeOrderModal = () => dispatch(clearOrderFeedback());
+
+  const onOrderClick = async () => {
+    if (!bun || orderSubmitPending) {
+      return;
+    }
+    if (!isAuthenticated) {
+      navigate('/login', { replace: false, state: { from: location } });
+      return;
+    }
+
+    const fillingIds = ingredients.map((i) => i._id);
+    const ids = [bun._id, ...fillingIds, bun._id];
+
+    try {
+      await dispatch(submitOrder(ids)).unwrap();
+    } catch {}
+  };
+
+  const showingOrderLoader = orderSubmitPending && orderNumber === null;
 
   return (
     <BurgerConstructorUI
       price={price}
-      orderRequest={orderRequest}
+      orderRequest={showingOrderLoader}
       constructorItems={constructorItems}
-      orderModalData={orderModalData}
+      orderNumber={showingOrderLoader ? null : orderNumber}
       onOrderClick={onOrderClick}
       closeOrderModal={closeOrderModal}
     />
