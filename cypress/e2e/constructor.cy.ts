@@ -1,4 +1,4 @@
-import { ACCESS_TOKEN, REFRESH_TOKEN } from '../support/commands';
+/// <reference types="cypress" />
 
 const BUN_NAME = 'Краторная булка N-200i';
 const MAIN_NAME = 'Биокотлета из марсианской Магнолии';
@@ -6,14 +6,6 @@ const SAUCE_NAME = 'Соус Spicy-X';
 const BUN_ID = '643d69a5c3f7b9001cfa093c';
 const MAIN_ID = '643d69a5c3f7b9001cfa0941';
 const SAUCE_ID = '643d69a5c3f7b9001cfa0943';
-
-const addIngredientByName = (name: string) => {
-  cy.contains(name)
-    .parents('[data-cy^="ingredient-"]')
-    .find('button')
-    .contains('Добавить')
-    .click();
-};
 
 describe('Страница конструктора бургера', () => {
   beforeEach(() => {
@@ -25,24 +17,25 @@ describe('Страница конструктора бургера', () => {
     cy.intercept('GET', '**/auth/user**', { fixture: 'user.json' }).as(
       'getUser'
     );
-
-    cy.visit('/');
-    cy.wait('@getIngredients');
   });
 
   describe('добавление ингредиентов в конструктор', () => {
+    beforeEach(() => {
+      cy.visitConstructor();
+    });
+
     it('добавляет булку, начинку и соус в конструктор', () => {
-      addIngredientByName(BUN_NAME);
+      cy.addIngredientByName(BUN_NAME);
       cy.get('[data-cy="constructor-bun-1"]').should('contain', BUN_NAME);
       cy.get('[data-cy="constructor-bun-2"]').should('contain', BUN_NAME);
 
-      addIngredientByName(MAIN_NAME);
+      cy.addIngredientByName(MAIN_NAME);
       cy.get(`[data-cy="constructor-ingredient-${MAIN_ID}"]`).should(
         'contain',
         MAIN_NAME
       );
 
-      addIngredientByName(SAUCE_NAME);
+      cy.addIngredientByName(SAUCE_NAME);
       cy.get(`[data-cy="constructor-ingredient-${SAUCE_ID}"]`).should(
         'contain',
         SAUCE_NAME
@@ -51,12 +44,15 @@ describe('Страница конструктора бургера', () => {
   });
 
   describe('модальное окно ингредиента', () => {
+    beforeEach(() => {
+      cy.visitConstructor();
+    });
+
     it('отображает данные ингредиента, по которому кликнули', () => {
       cy.get(`[data-cy="ingredient-${BUN_ID}"]`)
         .find('[data-cy="ingredient-link"]')
         .click();
-      cy.get('[data-cy="modal"]').should('be.visible');
-      cy.get('[data-cy="modal"]').should('contain', BUN_NAME);
+      cy.get('[data-cy="modal"]').should('be.visible').and('contain', BUN_NAME);
 
       cy.get('[data-cy="modal-close"]').click();
       cy.get('[data-cy="modal"]').should('not.exist');
@@ -64,19 +60,10 @@ describe('Страница конструктора бургера', () => {
       cy.get(`[data-cy="ingredient-${MAIN_ID}"]`)
         .find('[data-cy="ingredient-link"]')
         .click();
-      cy.get('[data-cy="modal"]').should('be.visible');
-      cy.get('[data-cy="modal"]').should('contain', MAIN_NAME);
+      cy.get('[data-cy="modal"]').should('be.visible').and('contain', MAIN_NAME);
     });
 
-    it('закрывает модальное окно по крестику и по оверлею', () => {
-      cy.get(`[data-cy="ingredient-${BUN_ID}"]`)
-        .find('[data-cy="ingredient-link"]')
-        .click();
-      cy.get('[data-cy="modal"]').should('be.visible');
-
-      cy.get('[data-cy="modal-close"]').click();
-      cy.get('[data-cy="modal"]').should('not.exist');
-
+    it('закрывает модальное окно по оверлею', () => {
       cy.get(`[data-cy="ingredient-${MAIN_ID}"]`)
         .find('[data-cy="ingredient-link"]')
         .click();
@@ -92,15 +79,7 @@ describe('Страница конструктора бургера', () => {
       cy.intercept('POST', '**/orders', { fixture: 'order.json' }).as(
         'createOrder'
       );
-
-      cy.visit('/', {
-        onBeforeLoad(win) {
-          win.document.cookie = `accessToken=${encodeURIComponent(ACCESS_TOKEN)}; path=/`;
-          win.localStorage.setItem('refreshToken', REFRESH_TOKEN);
-        }
-      });
-      cy.wait('@getIngredients');
-      cy.wait('@getUser');
+      cy.visitConstructor({ withAuth: true });
     });
 
     afterEach(() => {
@@ -108,10 +87,10 @@ describe('Страница конструктора бургера', () => {
     });
 
     it('оформляет заказ, показывает номер и очищает конструктор', () => {
-      addIngredientByName(BUN_NAME);
-      addIngredientByName(MAIN_NAME);
+      cy.addIngredientByName(BUN_NAME);
+      cy.addIngredientByName(MAIN_NAME);
 
-      cy.contains('button', 'Оформить заказ').click();
+      cy.get('[data-cy="order-button"]').click();
       cy.wait('@createOrder');
 
       cy.get('[data-cy="modal"]').should('be.visible');

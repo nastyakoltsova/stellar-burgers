@@ -74,7 +74,7 @@ describe('burgerConstructor reducer', () => {
     expect(state.ingredients).toHaveLength(0);
   });
 
-  it('меняет порядок начинок', () => {
+  const createTwoIngredientsState = () => {
     const first: TConstructorIngredient = {
       ...main,
       _id: 'main-1',
@@ -88,7 +88,7 @@ describe('burgerConstructor reducer', () => {
       name: 'Вторая'
     };
 
-    const initialState = {
+    return {
       bun: null,
       ingredients: [first, second],
       orderRequestPending: false,
@@ -96,13 +96,47 @@ describe('burgerConstructor reducer', () => {
       orderNumber: null,
       orderError: null
     };
+  };
 
+  it('перемещает начинку вверх', () => {
     const state = burgerConstructorReducer(
-      initialState,
+      createTwoIngredientsState(),
       moveIngredient({ index: 1, direction: 'up' })
     );
 
     expect(state.ingredients[0].name).toBe('Вторая');
     expect(state.ingredients[1].name).toBe('Первая');
+  });
+
+  it('перемещает начинку вниз', () => {
+    const state = burgerConstructorReducer(
+      createTwoIngredientsState(),
+      moveIngredient({ index: 0, direction: 'down' })
+    );
+
+    expect(state.ingredients[0].name).toBe('Вторая');
+    expect(state.ingredients[1].name).toBe('Первая');
+  });
+
+  it('не меняет порядок при перемещении вверх с первого индекса', () => {
+    const initialState = createTwoIngredientsState();
+
+    const state = burgerConstructorReducer(
+      initialState,
+      moveIngredient({ index: 0, direction: 'up' })
+    );
+
+    expect(state.ingredients).toEqual(initialState.ingredients);
+  });
+
+  it('не меняет порядок при перемещении вниз с последнего индекса', () => {
+    const initialState = createTwoIngredientsState();
+
+    const state = burgerConstructorReducer(
+      initialState,
+      moveIngredient({ index: 1, direction: 'down' })
+    );
+
+    expect(state.ingredients).toEqual(initialState.ingredients);
   });
 });
